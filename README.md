@@ -49,11 +49,7 @@ These findings are generally evaluated as **security misconfiguration** or **web
 
 ## Features
 
-- Interactive mode
-- Direct scan mode
-- Cyan terminal theme
 - Windows CMD title support
-- Safe `Ctrl+C` exit
 - HTTP security header audit
 - Cookie flag audit
 - HTTPS detection
