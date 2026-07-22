@@ -1,0 +1,48 @@
+# Copy this file to .github/workflows/previewshield.yml in the consuming repository.
+# Replace the example domains and PREVIEW_URL source with your deployment provider's output.
+name: PreviewShield
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out policy
+        uses: actions/checkout@v6
+
+      - name: Compare preview with production
+        id: previewshield
+        uses: devUmut35/PreviewShield@v1
+        with:
+          baseline: https://example.com
+          preview: ${{ vars.PREVIEW_URL }}
+          config: .previewshield.yml
+          paths: |
+            /
+            /login
+            /api/health
+          fail-on: high
+          format: sarif
+          output: artifacts/previewshield.sarif
+
+      - name: Upload SARIF
+        if: always() && hashFiles('artifacts/previewshield.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: artifacts/previewshield.sarif
+
+      - name: Preserve all reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: previewshield-${{ github.event.pull_request.number }}
+          path: artifacts/previewshield.*
+          if-no-files-found: warn
+          retention-days: 14

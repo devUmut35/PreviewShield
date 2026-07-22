@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: If PreviewShield supports your work, please cite it using this metadata.
+title: PreviewShield
+type: software
+version: 1.0.0
+date-released: 2026-07-22
+authors:
+  - family-names: Altan
+    given-names: Umutcan
+repository-code: https://github.com/devUmut35/PreviewShield
+url: https://github.com/devUmut35/PreviewShield
+license: Apache-2.0
+keywords:
+  - web security
+  - policy as code
+  - security headers
+  - DevSecOps
+  - regression testing

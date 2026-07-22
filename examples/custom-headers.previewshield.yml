@@ -1,0 +1,26 @@
+# Policy focused on deployment and organization-specific response contracts.
+version: 1
+name: custom-response-contract
+profile: balanced
+fail_on: high
+
+paths:
+  - /
+
+network:
+  allow_private: false
+
+checks:
+  required_headers:
+    X-Robots-Tag:
+      severity: high
+      contains: noindex
+      remediation: Prevent preview deployments from being indexed by search engines.
+    Cross-Origin-Resource-Policy:
+      severity: medium
+      exact: same-origin
+      remediation: Isolate same-origin resources from cross-origin embedding.
+    X-Organization-Security-Policy: true
+
+diff:
+  mode: regressions

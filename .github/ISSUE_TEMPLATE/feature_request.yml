@@ -1,0 +1,93 @@
+name: Feature request
+description: Propose a focused improvement, rule, integration, or report format.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem before prescribing an implementation. For a new security rule,
+        include an authoritative reference, default severity rationale, and false-positive risks.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Security rule
+        - Policy schema
+        - Baseline comparison
+        - Network safety
+        - GitHub Action or CI
+        - Report format
+        - Python API
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What cannot be done today, and who is affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe observable behavior, configuration, and output rather than only code.
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: Show a safe command, policy snippet, API call, or expected finding if useful.
+      render: shell
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: How do users handle this today, and why is that insufficient?
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and security considerations
+      description: Note schema, rule-ID, exit-code, network-boundary, or secret-handling impact.
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: For rules, link to OWASP, MDN, a standard, or another authoritative source.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and the rule catalog.
+          required: true
+        - label: This request is focused on one user problem.
+          required: true
+        - label: I have not included secrets or unauthorized target data.
+          required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you like to help implement this after design agreement?
+      options:
+        - Yes
+        - Maybe, with guidance
+        - No
+    validations:
+      required: true
