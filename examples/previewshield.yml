@@ -1,0 +1,29 @@
+# Balanced policy for a public website and ephemeral preview subdomains.
+version: 1
+name: public-web
+profile: balanced
+fail_on: high
+
+paths:
+  - /
+  - /login
+  - /api/health
+
+network:
+  timeout_seconds: 10
+  max_redirects: 5
+  allow_private: false
+  allowed_hosts:
+    - example.com
+    - "*.example.dev"
+
+checks:
+  min_hsts_max_age: 15552000
+  certificate_warning_days: 30
+  disabled: []
+  severity_overrides: {}
+  required_headers: {}
+
+diff:
+  # Existing production debt remains visible but does not block the preview.
+  mode: regressions

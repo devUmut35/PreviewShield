@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+    <meta name="referrer" content="no-referrer">
+    <title>PreviewShield — Release Control Room</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body
+    data-csrf-token="{{CSRF_TOKEN}}"
+    data-private-enabled="{{PRIVATE_TARGETS_ENABLED}}"
+  >
+    <a class="skip-link" href="#scan-form">Skip to scan controls</a>
+
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="PreviewShield home">
+        <span class="brand-mark" aria-hidden="true">PS</span>
+        <span>PreviewShield</span>
+      </a>
+      <div class="local-signal" aria-label="This interface is local only">
+        <span class="signal-dot" aria-hidden="true"></span>
+        <span>Local only <span class="local-detail">&middot; nothing uploaded</span></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Release control / web security</p>
+          <h1 id="page-title">Catch the change.<br><span>Ship with proof.</span></h1>
+        </div>
+        <div class="hero-note">
+          <span class="note-index">01</span>
+          <p>
+            Compare production with a preview, or inspect one site. PreviewShield reads
+            response metadata—never response bodies.
+          </p>
+        </div>
+      </section>
+
+      <section class="control-room" aria-label="PreviewShield controls">
+        <div class="control-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="coordinate">Configure run</p>
+              <h2>What should we inspect?</h2>
+            </div>
+            <span class="step-badge">01 / 03</span>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="Scan mode">
+            <button
+              id="diff-tab"
+              class="mode-tab is-active"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="diff-fields"
+              data-mode="diff"
+            >
+              <span>Compare deployments</span>
+              <small>Recommended</small>
+            </button>
+            <button
+              id="scan-tab"
+              class="mode-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="scan-fields"
+              data-mode="scan"
+            >
+              <span>Scan one site</span>
+              <small>Quick posture check</small>
+            </button>
+          </div>
+
+          <form id="scan-form" novalidate>
+            <div
+              id="diff-fields"
+              class="target-fields"
+              role="tabpanel"
+              aria-labelledby="diff-tab"
+            >
+              <label class="field" for="baseline">
+                <span class="field-label">Production URL</span>
+                <input
+                  id="baseline"
+                  name="baseline"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  spellcheck="false"
+                  placeholder="https://example.com"
+                  maxlength="2048"
+                  required
+                >
+                <small>The known baseline.</small>
+              </label>
+              <label class="field preview-field" for="preview">
+                <span class="field-label">Preview URL</span>
+                <input
+                  id="preview"
+                  name="preview"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  spellcheck="false"
+                  placeholder="https://pr-142.example.dev"
+                  maxlength="2048"
+                  required
+                >
+                <small>The release candidate.</small>
+              </label>
+            </div>
+
+            <div
+              id="scan-fields"
+              class="target-fields single-target"
+              role="tabpanel"
+              aria-labelledby="scan-tab"
+              hidden
+            >
+              <label class="field" for="target">
+                <span class="field-label">Site URL</span>
+                <input
+                  id="target"
+                  name="target"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  spellcheck="false"
+                  placeholder="https://example.com"
+                  maxlength="2048"
+                >
+                <small>HTTPS is assumed when the scheme is omitted.</small>
+              </label>
+            </div>
+
+            <div class="options-grid">
+              <fieldset class="profile-fieldset">
+                <legend>Policy profile</legend>
+                <div class="choice-row">
+                  <label class="choice-card">
+                    <input type="radio" name="profile" value="balanced" checked>
+                    <span>
+                      <strong>Balanced</strong>
+                      <small>Practical defaults</small>
+                    </span>
+                  </label>
+                  <label class="choice-card">
+                    <input type="radio" name="profile" value="strict">
+                    <span>
+                      <strong>Strict</strong>
+                      <small>Higher assurance</small>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <label class="field threshold-field" for="fail-on">
+                <span class="field-label">Block at</span>
+                <select id="fail-on" name="fail_on">
+                  <option value="critical">Critical</option>
+                  <option value="high" selected>High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                  <option value="info">Info</option>
+                </select>
+                <small>Minimum severity that fails the run.</small>
+              </label>
+            </div>
+
+            <label class="field routes-field" for="paths">
+              <span class="field-label">Routes</span>
+              <textarea
+                id="paths"
+                name="paths"
+                rows="3"
+                maxlength="10259"
+                spellcheck="false"
+                placeholder="/&#10;/login&#10;/api/health"
+              >/</textarea>
+              <small>One origin-relative route per line. Up to 20.</small>
+            </label>
+
+            <details class="advanced-options">
+              <summary>
+                <span>Advanced network access</span>
+                <span aria-hidden="true">+</span>
+              </summary>
+              <div class="advanced-body">
+                <div id="private-locked" class="private-notice">
+                  <strong>Private targets are locked</strong>
+                  <p>
+                    Restart with <code>previewshield ui --allow-private-targets</code> only
+                    when you need to inspect a trusted localhost or private service.
+                  </p>
+                </div>
+                <div id="private-controls" class="private-controls" hidden>
+                  <label class="switch-row">
+                    <input id="allow-private" name="allow_private" type="checkbox">
+                    <span class="switch" aria-hidden="true"></span>
+                    <span>
+                      <strong>Allow private and localhost targets</strong>
+                      <small>This relaxes PreviewShield's normal SSRF boundary.</small>
+                    </span>
+                  </label>
+                  <label id="authorization-row" class="authorization-row" hidden>
+                    <input id="authorized-private" name="authorized_private" type="checkbox">
+                    <span>I confirm that I own or am authorized to scan these targets.</span>
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            <div id="form-error" class="form-error" role="alert" tabindex="-1" hidden></div>
+
+            <button id="run-button" class="run-button" type="submit">
+              <span class="button-idle">Compare security</span>
+              <span class="button-busy" aria-hidden="true">Reading the security seam…</span>
+              <span class="button-arrow" aria-hidden="true">→</span>
+            </button>
+          </form>
+        </div>
+
+        <aside class="boundary-panel" aria-labelledby="boundary-title">
+          <p class="coordinate">Trust boundary</p>
+          <h2 id="boundary-title">Your scan stays here.</h2>
+          <ol class="boundary-list">
+            <li>
+              <span>01</span>
+              <p><strong>Loopback server</strong>Only this computer can reach the interface.</p>
+            </li>
+            <li>
+              <span>02</span>
+              <p><strong>Validated network</strong>Every redirect and resolved address is checked.</p>
+            </li>
+            <li>
+              <span>03</span>
+              <p><strong>Metadata only</strong>Response bodies are never downloaded.</p>
+            </li>
+          </ol>
+          <div class="boundary-stamp" aria-label="No cloud account required">
+            No account<br>No cloud<br>No tracking
+          </div>
+        </aside>
+      </section>
+
+      <section id="results" class="results" aria-labelledby="results-title" hidden>
+        <div class="results-heading">
+          <div>
+            <p class="coordinate">Release signal</p>
+            <h2 id="results-title" tabindex="-1">Security result</h2>
+          </div>
+          <span class="step-badge">02 / 03</span>
+        </div>
+
+        <article id="verdict-panel" class="verdict-panel">
+          <div class="verdict-word">
+            <span>Policy result</span>
+            <strong id="verdict">—</strong>
+          </div>
+          <p id="verdict-copy">Run a scan to see the release signal.</p>
+          <div class="verdict-meta">
+            <span id="policy-name">—</span>
+            <span id="generated-at">—</span>
+          </div>
+        </article>
+
+        <div id="security-seam" class="security-seam">
+          <article class="score-side baseline-score">
+            <span id="left-label">Production</span>
+            <strong><span id="left-grade">—</span> <small id="left-score">—/100</small></strong>
+            <p id="left-target">—</p>
+          </article>
+          <div class="seam-spine" aria-hidden="true">
+            <span>Δ</span>
+            <strong id="score-delta">—</strong>
+          </div>
+          <article id="preview-score-side" class="score-side preview-score">
+            <span>Preview</span>
+            <strong><span id="right-grade">—</span> <small id="right-score">—/100</small></strong>
+            <p id="right-target">—</p>
+          </article>
+        </div>
+
+        <div id="metrics" class="metrics" aria-label="Finding summary"></div>
+
+        <div class="findings-section">
+          <div class="findings-heading">
+            <div>
+              <p class="coordinate">Priority queue</p>
+              <h3 id="findings-title">What changed?</h3>
+            </div>
+            <span id="finding-total" class="finding-total">0 findings</span>
+          </div>
+          <div id="filter-row" class="filter-row" role="group" aria-label="Filter findings"></div>
+          <div id="finding-list" class="finding-list"></div>
+          <div id="empty-findings" class="empty-findings" hidden>
+            <strong>No findings in this view.</strong>
+            <p>Change the filter or inspect the downloaded report for full route evidence.</p>
+          </div>
+        </div>
+
+        <div class="export-panel">
+          <div>
+            <p class="coordinate">Evidence package</p>
+            <h3>Take the result with you.</h3>
+          </div>
+          <div class="export-actions">
+            <label for="export-format">
+              <span class="visually-hidden">Report format</span>
+              <select id="export-format">
+                <option value="html">HTML report</option>
+                <option value="json">JSON</option>
+                <option value="sarif">SARIF</option>
+                <option value="junit">JUnit XML</option>
+                <option value="markdown">Markdown</option>
+              </select>
+            </label>
+            <button id="download-report" type="button">Download report</button>
+            <button id="copy-action" class="secondary-button" type="button">Copy GitHub Action</button>
+          </div>
+          <p id="export-status" class="export-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>PreviewShield / Release control room</span>
+      <span>Hardening evidence—not a penetration test or security guarantee.</span>
+    </footer>
+
+    <template id="metric-template">
+      <article class="metric-card">
+        <span class="metric-label"></span>
+        <strong class="metric-value"></strong>
+        <small class="metric-detail"></small>
+      </article>
+    </template>
+
+    <template id="finding-template">
+      <article class="finding-card">
+        <div class="finding-rail">
+          <span class="finding-kind"></span>
+          <span class="finding-severity"></span>
+        </div>
+        <div class="finding-content">
+          <div class="finding-title-row">
+            <span class="finding-rule"></span>
+            <h4 class="finding-title"></h4>
+          </div>
+          <p class="finding-target"></p>
+          <p class="finding-message"></p>
+          <div class="remediation-block">
+            <span>Fix</span>
+            <p class="finding-remediation"></p>
+          </div>
+          <p class="finding-evidence" hidden></p>
+        </div>
+      </article>
+    </template>
+  </body>
+</html>

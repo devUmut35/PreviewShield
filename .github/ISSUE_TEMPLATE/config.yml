@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/devUmut35/PreviewShield/security/advisories/new
+    about: Report vulnerabilities in PreviewShield privately. Do not open a public issue.
+  - name: Documentation
+    url: https://github.com/devUmut35/PreviewShield/tree/main/docs
+    about: Read setup, policy, Action, output, rule, and security-model guides.

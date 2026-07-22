@@ -1,0 +1,70 @@
+name: Docker Action Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - action.yml
+      - Dockerfile
+      - pyproject.toml
+      - "src/**"
+      - ".github/workflows/action-test.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - action.yml
+      - Dockerfile
+      - pyproject.toml
+      - "src/**"
+      - ".github/workflows/action-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: action-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-action:
+    name: Build and exercise Docker action
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      # Local development does not require Docker; this job is the canonical
+      # Dockerfile validation on the same runner type used by consumers.
+      - name: Build container image
+        run: docker build --tag previewshield-action:test .
+      - name: Scan a public fixture
+        id: scan
+        uses: ./
+        with:
+          target: https://example.com
+          paths: /
+          fail-on: critical
+          format: json
+          output: previewshield-action-report.json
+      - name: Verify reports and outputs
+        env:
+          REPORT_PATH: ${{ steps.scan.outputs.report }}
+          SCORE: ${{ steps.scan.outputs.score }}
+          GRADE: ${{ steps.scan.outputs.grade }}
+          PASSED: ${{ steps.scan.outputs.passed }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          report = Path(os.environ["REPORT_PATH"])
+          if not report.is_file():
+              raise SystemExit(f"Missing action report: {report}")
+          if not os.environ["SCORE"] or not os.environ["GRADE"]:
+              raise SystemExit("Action did not publish score and grade outputs")
+          if os.environ["PASSED"] not in {"true", "false"}:
+              raise SystemExit("Action published an invalid passed output")
+          PY

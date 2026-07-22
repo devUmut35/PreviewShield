@@ -1,0 +1,136 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "previewshield"
+version = "1.0.0"
+description = "Policy-as-code security regression testing for web previews and production deployments."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [
+  { name = "Umutcan Altan", email = "devUmut35@users.noreply.github.com" },
+]
+keywords = [
+  "security",
+  "devsecops",
+  "http-headers",
+  "github-actions",
+  "policy-as-code",
+  "web-security",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+  "PyYAML>=6.0.2,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "bandit[toml]>=1.8,<2",
+  "build>=1.2,<2",
+  "mypy>=1.14,<2",
+  "pip-audit>=2.7,<3",
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+  "twine>=6,<7",
+  "types-PyYAML>=6.0.12,<7",
+]
+
+[project.scripts]
+previewshield = "previewshield.cli:main"
+previewshield-action = "previewshield.action:main"
+
+[project.urls]
+Homepage = "https://github.com/devUmut35/PreviewShield"
+Documentation = "https://github.com/devUmut35/PreviewShield/tree/main/docs"
+Issues = "https://github.com/devUmut35/PreviewShield/issues"
+Source = "https://github.com/devUmut35/PreviewShield"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+previewshield = ["py.typed"]
+"previewshield.webui.assets" = ["*.html", "*.css", "*.js", "*.mjs", "fonts/*.ttf", "fonts/*.txt"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["dist", "build"]
+
+[tool.ruff.lint]
+select = [
+  "A",
+  "B",
+  "BLE",
+  "C4",
+  "E",
+  "F",
+  "I",
+  "N",
+  "PERF",
+  "PIE",
+  "PL",
+  "RUF",
+  "S",
+  "SIM",
+  "UP",
+  "W",
+]
+ignore = [
+  "S101",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR2004", "S101", "S104"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+pretty = true
+packages = ["previewshield"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers --cov=previewshield --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["previewshield"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]

@@ -1,0 +1,110 @@
+name: Bug report
+description: Report reproducible incorrect behavior in PreviewShield.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve PreviewShield. Search existing issues first.
+        Do not include secrets, internal URLs, private IP addresses, or unredacted response data.
+        Security vulnerabilities belong in the private reporting channel linked below.
+
+  - type: input
+    id: version
+    attributes:
+      label: PreviewShield version
+      description: Paste the output of `previewshield --version`.
+      placeholder: PreviewShield 1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface
+      options:
+        - CLI scan
+        - CLI diff
+        - Policy validation
+        - GitHub Action
+        - Python API
+        - Reporter
+        - Packaging or installation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, and CI provider/runner when applicable.
+      placeholder: Ubuntu 24.04, Python 3.12, GitHub-hosted runner
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Redacted command or integration
+      description: Show the smallest invocation. Replace hostnames and all secrets.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: policy
+    attributes:
+      label: Minimal redacted policy
+      description: Include only policy fields needed to reproduce the problem.
+      render: yaml
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What result, finding, diff classification, output, or exit code did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include the exact redacted error and exit code.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide a deterministic sequence using a target you own or a local fixture.
+      placeholder: |
+        1. Create ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add sanitized logs, screenshots, or related issue links if they help.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: I removed credentials, customer data, and internal network details.
+          required: true
+        - label: I am authorized to scan every target used in this report.
+          required: true
+        - label: This is not a security vulnerability in PreviewShield itself.
+          required: true

@@ -1,0 +1,34 @@
+# Strict policy for a public application with a mature security baseline.
+version: 1
+name: strict-public-web
+profile: strict
+fail_on: medium
+
+paths:
+  - /
+  - /login
+  - /account
+  - /api/health
+
+network:
+  timeout_seconds: 8
+  max_redirects: 3
+  allow_private: false
+  allowed_hosts:
+    - example.com
+    - "*.example.dev"
+
+checks:
+  min_hsts_max_age: 31536000
+  certificate_warning_days: 45
+  disabled: []
+  severity_overrides:
+    PS1204: medium
+  required_headers:
+    Cross-Origin-Resource-Policy:
+      severity: medium
+      exact: same-origin
+
+diff:
+  # Every threshold-crossing preview finding fails, including baseline debt.
+  mode: absolute
