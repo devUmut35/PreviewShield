@@ -3,7 +3,6 @@
 [![CI](https://github.com/devUmut35/PreviewShield/actions/workflows/ci.yml/badge.svg)](https://github.com/devUmut35/PreviewShield/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/devUmut35/PreviewShield?logo=github)](https://github.com/devUmut35/PreviewShield/stargazers)
 
 **Stop a pull request from quietly weakening your web security.**
 
