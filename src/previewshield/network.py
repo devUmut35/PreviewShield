@@ -27,12 +27,12 @@ from urllib.parse import SplitResult, quote, urldefrag, urljoin, urlsplit, urlun
 
 from previewshield.exceptions import NetworkSafetyError, ScanError
 from previewshield.models import MutableHeaderBag, RedirectHop, ResponseSnapshot, TLSInfo
+from previewshield.targets import normalize_hostname as _shared_normalize_hostname
 
 _DEFAULT_TIMEOUT = 10.0
 _DEFAULT_REDIRECTS = 5
 _MAX_REDIRECTS = 20
 _MAX_URL_LENGTH = 8192
-_MAX_HOSTNAME_LENGTH = 253
 _MAX_PORT = 65_535
 _MAX_HEADER_VALUE_LENGTH = 16_384
 _MAX_RESPONSE_HEADER_BYTES = 64 * 1024
@@ -52,7 +52,6 @@ _FORBIDDEN_REQUEST_HEADERS = frozenset(
 )
 _HEADER_NAME = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 _INVALID_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
-_HOST_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 _CONTROL_CHARACTER = re.compile(r"[\x00-\x08\x0a-\x1f\x7f]")
 _UNSAFE_URL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -401,26 +400,10 @@ def _parse_url(url: str, *, allow_shorthand: bool) -> SplitResult:
 
 
 def _normalize_hostname(hostname: str) -> str:
-    if "%" in hostname:
-        raise NetworkSafetyError("IPv6 scope identifiers are not allowed in target URLs.")
-
     try:
-        return ipaddress.ip_address(hostname).compressed
-    except ValueError:
-        pass
-
-    hostname = hostname.rstrip(".")
-    if not hostname:
-        raise NetworkSafetyError("Target URL must include a hostname.")
-    try:
-        ascii_hostname = hostname.encode("idna").decode("ascii").lower()
-    except UnicodeError as error:
-        raise NetworkSafetyError("Target URL contains an invalid hostname.") from error
-    if len(ascii_hostname) > _MAX_HOSTNAME_LENGTH:
-        raise NetworkSafetyError("Target hostname exceeds 253 characters.")
-    if any(not _HOST_LABEL.fullmatch(label) for label in ascii_hostname.split(".")):
-        raise NetworkSafetyError("Target URL contains an invalid hostname.")
-    return ascii_hostname
+        return _shared_normalize_hostname(hostname)
+    except ValueError as error:
+        raise NetworkSafetyError(str(error)) from error
 
 
 def _normalize_allowed_hosts(patterns: tuple[str, ...]) -> tuple[str, ...]:
