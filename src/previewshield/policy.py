@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import ipaddress
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -14,12 +13,11 @@ import yaml
 
 from previewshield.exceptions import ConfigurationError
 from previewshield.models import Severity
+from previewshield.targets import normalize_hostname, normalize_origin_paths
 from previewshield.utils import clean_text, parse_threshold, validate_header_name
 
 MAX_POLICY_BYTES = 256 * 1024
 _RULE_ID = re.compile(r"^(?:PS\d{4}|CUSTOM\.[A-Z0-9_.-]+)$")
-_HOST_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
-_MAX_HOSTNAME_LENGTH = 253
 _ALLOWED_ROOT_KEYS = {
     "version",
     "name",
@@ -351,19 +349,10 @@ def _paths(value: Any) -> tuple[str, ...]:
     paths = _string_list(value, "paths")
     if not paths:
         raise ConfigurationError("paths must include at least one route.")
-    normalized: list[str] = []
-    for path in paths:
-        parsed = urlsplit(path)
-        if parsed.scheme or parsed.netloc or parsed.fragment:
-            raise ConfigurationError(f"Path must be origin-relative without a fragment: {path!r}.")
-        route = parsed.path or "/"
-        if not route.startswith("/") or ".." in PurePosixPath(route).parts:
-            raise ConfigurationError(f"Unsafe route path: {path!r}.")
-        if parsed.query:
-            route = f"{route}?{parsed.query}"
-        if route not in normalized:
-            normalized.append(route)
-    return tuple(normalized)
+    try:
+        return normalize_origin_paths(paths)
+    except ValueError as error:
+        raise ConfigurationError(f"Unsafe route path ({error})") from error
 
 
 def _rule_ids(value: Any, field: str) -> tuple[str, ...]:
@@ -390,16 +379,9 @@ def _normalize_host(value: str) -> str:
     if "*" in raw_hostname:
         raise ConfigurationError(f"Invalid allowed host: {value!r}.")
     try:
-        normalized = raw_hostname.encode("idna").decode("ascii")
-    except UnicodeError as error:
+        normalized = normalize_hostname(raw_hostname)
+    except ValueError as error:
         raise ConfigurationError(f"Invalid allowed host: {value!r}.") from error
-    if len(normalized) > _MAX_HOSTNAME_LENGTH:
-        raise ConfigurationError(f"Invalid allowed host: {value!r}.")
-    try:
-        ipaddress.ip_address(normalized)
-    except ValueError:
-        if any(not _HOST_LABEL.fullmatch(label) for label in normalized.split(".")):
-            raise ConfigurationError(f"Invalid allowed host: {value!r}.") from None
     else:
         if wildcard:
             raise ConfigurationError("Wildcard allowed hosts cannot target IP addresses.")

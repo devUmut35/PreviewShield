@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import ipaddress
-import re
 from collections.abc import Mapping, Sequence
-from pathlib import PurePosixPath
 from urllib.parse import urlsplit, urlunsplit
 
 from previewshield._version import __version__
@@ -14,6 +11,7 @@ from previewshield.exceptions import ConfigurationError
 from previewshield.models import RouteReport, ScanReport, Severity
 from previewshield.network import NetworkOptions, fetch
 from previewshield.policy import Policy, default_policy
+from previewshield.targets import normalize_hostname, normalize_origin_paths
 from previewshield.utils import utc_now
 
 SCHEMA_VERSION = "1.0"
@@ -25,8 +23,6 @@ _SCORE_PENALTIES = {
     Severity.CRITICAL: 25,
 }
 _GRADES = ((95, "A+"), (90, "A"), (80, "B"), (70, "C"), (60, "D"))
-_HOST_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
-_MAX_HOSTNAME_LENGTH = 253
 
 
 def scan(  # noqa: PLR0913 - public API uses explicit, optional controls
@@ -47,7 +43,10 @@ def scan(  # noqa: PLR0913 - public API uses explicit, optional controls
 
     active_policy = policy or default_policy()
     threshold = fail_on or active_policy.fail_on
-    route_paths = _validate_paths(paths) if paths is not None else active_policy.paths
+    try:
+        route_paths = normalize_origin_paths(paths) if paths is not None else active_policy.paths
+    except ValueError as error:
+        raise ConfigurationError(str(error)) from error
     route_urls, normalized_target = _route_urls(target, route_paths, paths is None)
     try:
         options = NetworkOptions(
@@ -117,10 +116,9 @@ def _route_urls(
         raise ConfigurationError("Target URL fragments are not allowed.")
 
     try:
-        hostname = parsed.hostname.rstrip(".").encode("idna").decode("ascii").lower()
-    except UnicodeError as error:
+        hostname = normalize_hostname(parsed.hostname or "")
+    except ValueError as error:
         raise ConfigurationError("Target contains an invalid hostname.") from error
-    _validate_hostname(hostname)
     display_host = f"[{hostname}]" if ":" in hostname else hostname
     default_port = 443 if parsed.scheme.lower() == "https" else 80
     netloc = display_host if port in {None, default_port} else f"{display_host}:{port}"
@@ -130,40 +128,6 @@ def _route_urls(
     if preserve_single_target_path and tuple(paths) == ("/",) and provided_route != "/":
         return (f"{origin}{provided_route}",), f"{origin}{provided_route}"
     return tuple(f"{origin}{path}" for path in paths), origin
-
-
-def _validate_hostname(hostname: str) -> None:
-    if len(hostname) > _MAX_HOSTNAME_LENGTH:
-        raise ConfigurationError("Target hostname exceeds 253 characters.")
-    try:
-        ipaddress.ip_address(hostname)
-    except ValueError:
-        if not hostname or any(not _HOST_LABEL.fullmatch(label) for label in hostname.split(".")):
-            raise ConfigurationError("Target contains an invalid hostname.") from None
-
-
-def _validate_paths(paths: Sequence[str]) -> tuple[str, ...]:
-    if isinstance(paths, (str, bytes)) or not paths:
-        raise ConfigurationError("At least one origin-relative path is required.")
-    result: list[str] = []
-    for raw_path in paths:
-        if not isinstance(raw_path, str) or not raw_path.strip():
-            raise ConfigurationError("Scan paths must be non-empty strings.")
-        parsed = urlsplit(raw_path.strip())
-        route = parsed.path or "/"
-        if (
-            parsed.scheme
-            or parsed.netloc
-            or parsed.fragment
-            or not route.startswith("/")
-            or ".." in PurePosixPath(route).parts
-        ):
-            raise ConfigurationError(f"Unsafe origin-relative path: {raw_path!r}.")
-        if parsed.query:
-            route = f"{route}?{parsed.query}"
-        if route not in result:
-            result.append(route)
-    return tuple(result)
 
 
 def _score(routes: Sequence[RouteReport]) -> int:
